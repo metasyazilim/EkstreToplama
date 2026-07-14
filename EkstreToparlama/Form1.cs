@@ -23,6 +23,11 @@ namespace EkstreToparlama
         public Form1()
         {
             InitializeComponent();
+
+            if (System.IO.File.Exists("Copilot_20260714_160227.ico"))
+            {
+                this.Icon = new System.Drawing.Icon("Copilot_20260714_160227.ico");
+            }
         }
 
         private void Form1_Load(object sender, EventArgs e)

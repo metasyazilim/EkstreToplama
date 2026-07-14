@@ -45,3 +45,4 @@ F:\Github\EkstreToplama\EkstreToparlama\obj\Debug\net9.0-windows\refint\EkstreTo
 F:\Github\EkstreToplama\EkstreToparlama\obj\Debug\net9.0-windows\EkstreToparlama.pdb
 F:\Github\EkstreToplama\EkstreToparlama\obj\Debug\net9.0-windows\EkstreToparlama.genruntimeconfig.cache
 F:\Github\EkstreToplama\EkstreToparlama\obj\Debug\net9.0-windows\ref\EkstreToparlama.dll
+F:\Github\EkstreToplama\EkstreToparlama\bin\Debug\net9.0-windows\Copilot_20260714_160227.ico
