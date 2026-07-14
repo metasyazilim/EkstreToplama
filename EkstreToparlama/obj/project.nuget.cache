@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "Wie8qy+loOA=",
+  "dgSpecHash": "CJmz5hWCL7o=",
   "success": true,
-  "projectFilePath": "C:\\Users\\Bugra\\Desktop\\EkstreToparlama\\EkstreToparlama\\EkstreToparlama.csproj",
+  "projectFilePath": "F:\\Github\\EkstreToplama\\EkstreToparlama\\EkstreToparlama.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\Bugra\\.nuget\\packages\\uglytoad.pdfpig\\1.7.0-custom-5\\uglytoad.pdfpig.1.7.0-custom-5.nupkg.sha512",
     "C:\\Users\\Bugra\\.nuget\\packages\\uglytoad.pdfpig.core\\1.7.0-custom-5\\uglytoad.pdfpig.core.1.7.0-custom-5.nupkg.sha512",

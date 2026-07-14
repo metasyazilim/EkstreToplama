@@ -18,6 +18,9 @@
         private void InitializeComponent()
         {
             pnlTop = new Panel();
+            lblStatusLog = new Label();
+            cmbSavedRecords = new ComboBox();
+            lblSavedRecords = new Label();
             btnResetFilter = new Button();
             cmbDateFilter = new ComboBox();
             lblDateFilterTitle = new Label();
@@ -51,7 +54,10 @@
             // 
             // pnlTop
             // 
-            pnlTop.BackColor = Color.FromArgb(15, 23, 42); // Daha derin bir lacivert/slate
+            pnlTop.BackColor = Color.FromArgb(15, 23, 42);
+            pnlTop.Controls.Add(lblStatusLog);
+            pnlTop.Controls.Add(cmbSavedRecords);
+            pnlTop.Controls.Add(lblSavedRecords);
             pnlTop.Controls.Add(btnResetFilter);
             pnlTop.Controls.Add(cmbDateFilter);
             pnlTop.Controls.Add(lblDateFilterTitle);
@@ -63,6 +69,38 @@
             pnlTop.Size = new Size(1264, 75);
             pnlTop.TabIndex = 0;
             // 
+            // lblStatusLog
+            // 
+            lblStatusLog.AutoSize = true;
+            lblStatusLog.Font = new Font("Segoe UI Semibold", 9.5F, FontStyle.Bold);
+            lblStatusLog.ForeColor = Color.FromArgb(34, 197, 94);
+            lblStatusLog.Location = new Point(440, 28);
+            lblStatusLog.Name = "lblStatusLog";
+            lblStatusLog.Size = new Size(0, 17);
+            lblStatusLog.TabIndex = 7;
+            // 
+            // cmbSavedRecords
+            // 
+            cmbSavedRecords.DropDownStyle = ComboBoxStyle.DropDownList;
+            cmbSavedRecords.Font = new Font("Segoe UI", 10F);
+            cmbSavedRecords.FormattingEnabled = true;
+            cmbSavedRecords.Location = new Point(285, 24);
+            cmbSavedRecords.Name = "cmbSavedRecords";
+            cmbSavedRecords.Size = new Size(140, 25);
+            cmbSavedRecords.TabIndex = 6;
+            cmbSavedRecords.SelectedIndexChanged += cmbSavedRecords_SelectedIndexChanged;
+            // 
+            // lblSavedRecords
+            // 
+            lblSavedRecords.AutoSize = true;
+            lblSavedRecords.Font = new Font("Segoe UI Semibold", 10F, FontStyle.Bold);
+            lblSavedRecords.ForeColor = Color.FromArgb(241, 245, 249);
+            lblSavedRecords.Location = new Point(220, 27);
+            lblSavedRecords.Name = "lblSavedRecords";
+            lblSavedRecords.Size = new Size(62, 19);
+            lblSavedRecords.TabIndex = 5;
+            lblSavedRecords.Text = "Kayıtlar:";
+            // 
             // btnResetFilter
             // 
             btnResetFilter.BackColor = Color.FromArgb(71, 85, 105);
@@ -71,9 +109,9 @@
             btnResetFilter.FlatStyle = FlatStyle.Flat;
             btnResetFilter.Font = new Font("Segoe UI", 9.5F, FontStyle.Bold);
             btnResetFilter.ForeColor = Color.White;
-            btnResetFilter.Location = new Point(1075, 20);
+            btnResetFilter.Location = new Point(1115, 20);
             btnResetFilter.Name = "btnResetFilter";
-            btnResetFilter.Size = new Size(140, 35);
+            btnResetFilter.Size = new Size(130, 35);
             btnResetFilter.TabIndex = 4;
             btnResetFilter.Text = "🔄 Tüm Tarihler";
             btnResetFilter.UseVisualStyleBackColor = false;
@@ -85,9 +123,9 @@
             cmbDateFilter.DropDownStyle = ComboBoxStyle.DropDownList;
             cmbDateFilter.Font = new Font("Segoe UI", 11F);
             cmbDateFilter.FormattingEnabled = true;
-            cmbDateFilter.Location = new Point(880, 23);
+            cmbDateFilter.Location = new Point(965, 23);
             cmbDateFilter.Name = "cmbDateFilter";
-            cmbDateFilter.Size = new Size(185, 28);
+            cmbDateFilter.Size = new Size(140, 28);
             cmbDateFilter.TabIndex = 3;
             cmbDateFilter.DrawItem += cmbDateFilter_DrawItem;
             cmbDateFilter.SelectedIndexChanged += cmbDateFilter_SelectedIndexChanged;
@@ -97,7 +135,7 @@
             lblDateFilterTitle.AutoSize = true;
             lblDateFilterTitle.Font = new Font("Segoe UI Semibold", 10F, FontStyle.Bold);
             lblDateFilterTitle.ForeColor = Color.FromArgb(241, 245, 249);
-            lblDateFilterTitle.Location = new Point(765, 27);
+            lblDateFilterTitle.Location = new Point(855, 27);
             lblDateFilterTitle.Name = "lblDateFilterTitle";
             lblDateFilterTitle.Size = new Size(111, 19);
             lblDateFilterTitle.TabIndex = 2;
@@ -106,17 +144,17 @@
             // lblFileInfo
             // 
             lblFileInfo.AutoSize = true;
-            lblFileInfo.Font = new Font("Segoe UI", 10F);
+            lblFileInfo.Font = new Font("Segoe UI", 8.5F);
             lblFileInfo.ForeColor = Color.FromArgb(148, 163, 184);
-            lblFileInfo.Location = new Point(235, 28);
+            lblFileInfo.Location = new Point(15, 58);
             lblFileInfo.Name = "lblFileInfo";
-            lblFileInfo.Size = new Size(328, 19);
+            lblFileInfo.Size = new Size(264, 13);
             lblFileInfo.TabIndex = 1;
             lblFileInfo.Text = "Lütfen işlem yapmak istediğiniz PDF ekstresini seçin.";
             // 
             // btnLoadPdf
             // 
-            btnLoadPdf.BackColor = Color.FromArgb(2, 132, 199); // Sky Blue 600
+            btnLoadPdf.BackColor = Color.FromArgb(2, 132, 199);
             btnLoadPdf.Cursor = Cursors.Hand;
             btnLoadPdf.FlatAppearance.BorderSize = 0;
             btnLoadPdf.FlatStyle = FlatStyle.Flat;
@@ -124,7 +162,7 @@
             btnLoadPdf.ForeColor = Color.White;
             btnLoadPdf.Location = new Point(15, 18);
             btnLoadPdf.Name = "btnLoadPdf";
-            btnLoadPdf.Size = new Size(200, 38);
+            btnLoadPdf.Size = new Size(190, 38);
             btnLoadPdf.TabIndex = 0;
             btnLoadPdf.Text = "📂 Banka Ekstresi Yükle";
             btnLoadPdf.UseVisualStyleBackColor = false;
@@ -166,7 +204,7 @@
             // btnTransfer
             // 
             btnTransfer.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
-            btnTransfer.BackColor = Color.FromArgb(16, 185, 129); // Emerald 500
+            btnTransfer.BackColor = Color.FromArgb(16, 185, 129);
             btnTransfer.Cursor = Cursors.Hand;
             btnTransfer.FlatAppearance.BorderSize = 0;
             btnTransfer.FlatStyle = FlatStyle.Flat;
@@ -365,5 +403,8 @@
         private System.Windows.Forms.Label lblDateFilterTitle;
         private System.Windows.Forms.ComboBox cmbDateFilter;
         private System.Windows.Forms.Button btnResetFilter;
+        private System.Windows.Forms.Label lblSavedRecords;
+        private System.Windows.Forms.ComboBox cmbSavedRecords;
+        private System.Windows.Forms.Label lblStatusLog;
     }
 }

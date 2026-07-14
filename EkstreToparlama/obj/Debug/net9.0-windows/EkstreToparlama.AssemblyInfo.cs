@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("EkstreToparlama")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+a2c49d253c0e2f040d7b251dc59b1a912189e992")]
 [assembly: System.Reflection.AssemblyProductAttribute("EkstreToparlama")]
 [assembly: System.Reflection.AssemblyTitleAttribute("EkstreToparlama")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

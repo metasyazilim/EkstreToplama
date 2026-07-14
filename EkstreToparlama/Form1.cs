@@ -15,6 +15,10 @@ namespace EkstreToparlama
     {
         // Seçilen kartýn türünü tutacak deðiþken
         private string _secilenIslemTuru = "";
+        // Aktif olarak üzerinde çalýþýlan JSON dosyasýnýn tam yolu
+        private string _mevcutJsonYolu = "";
+        // ComboBox tetiklenme döngülerini engellemek için kontrol flag'i
+        private bool _isBindingCombo = false;
 
         public Form1()
         {
@@ -38,6 +42,9 @@ namespace EkstreToparlama
                 cmbDateFilter.Items.Add("Tüm Tarihler");
                 cmbDateFilter.SelectedIndex = 0;
             }
+
+            // Mevcut yerel JSON kayýtlarýný tara ve ComboBox'ý doldur
+            RefreshSavedRecordsCombo();
         }
 
         private void SetupDataGridViewStyle(DataGridView dgv)
@@ -89,13 +96,12 @@ namespace EkstreToparlama
 
                 foreach (var text in greenCards)
                 {
-                    // Daha soft yeþil tasarým
                     Button btn = CreateCardButton(text, Color.FromArgb(220, 252, 231), Color.FromArgb(21, 128, 61), Color.FromArgb(134, 239, 172));
                     flpCards.Controls.Add(btn);
                     lastGreenButton = btn;
                 }
 
-                // *** ÖNEMLÝ: Yeþil kartlardan sonra FlowLayout'u keserek Kýrmýzýlarý zorla alta atýyoruz ***
+                // *** Yeþil kartlardan sonra FlowLayout'u keserek Kýrmýzýlarý zorla alta atýyoruz ***
                 if (lastGreenButton != null)
                 {
                     flpCards.SetFlowBreak(lastGreenButton, true);
@@ -103,7 +109,6 @@ namespace EkstreToparlama
 
                 foreach (var text in redCards)
                 {
-                    // Daha soft kýrmýzý tasarým
                     Button btn = CreateCardButton(text, Color.FromArgb(254, 226, 226), Color.FromArgb(185, 28, 28), Color.FromArgb(252, 165, 165));
                     flpCards.Controls.Add(btn);
                 }
@@ -129,7 +134,6 @@ namespace EkstreToparlama
 
         private void Card_Click(object sender, EventArgs e)
         {
-            // Önceki seçimlerin kalýnlýk ve yazý fontlarýný sýfýrla
             foreach (Control ctrl in flpCards.Controls)
             {
                 if (ctrl is Button b)
@@ -139,7 +143,6 @@ namespace EkstreToparlama
                 }
             }
 
-            // Týklanan Card'ý kalýn çerçeve ile vurgula
             Button clickedBtn = (Button)sender;
             clickedBtn.FlatAppearance.BorderSize = 3;
             clickedBtn.Font = new Font("Segoe UI", 9.5F, FontStyle.Bold);
@@ -157,11 +160,29 @@ namespace EkstreToparlama
 
             if (openFileDialog.ShowDialog() == DialogResult.OK)
             {
+                // Kullanýcýdan Kayýt Dosya Ýsmini Sor
+                string dosyaAdiInput = PromptDialog.Show("Kayýt için dosya ismi giriniz (Örn: Haziran 2026):", "Yeni Kayýt Oluþtur");
+                if (string.IsNullOrWhiteSpace(dosyaAdiInput))
+                {
+                    dosyaAdiInput = "Ekstre_" + DateTime.Now.ToString("yyyyMMdd_HHmmss");
+                }
+
+                // Geçersiz karakterleri temizle ve boþluklarý alt tire yap
+                string temizDosyaAdi = string.Join("_", dosyaAdiInput.Split(Path.GetInvalidFileNameChars())).Replace(" ", "_");
+
+                string klasorYolu = Path.Combine(Application.StartupPath, "Kayitlar");
+                if (!Directory.Exists(klasorYolu))
+                {
+                    Directory.CreateDirectory(klasorYolu);
+                }
+
+                _mevcutJsonYolu = Path.Combine(klasorYolu, temizDosyaAdi + ".json");
+
                 lblFileInfo.Text = "Dosya Okunuyor: " + Path.GetFileName(openFileDialog.FileName);
                 Cursor = Cursors.WaitCursor;
 
                 dgvLeft.Rows.Clear();
-                dgvRight.Rows.Clear(); // Yeni dosya yüklenince sað tarafý da temizler
+                dgvRight.Rows.Clear();
 
                 if (cmbDateFilter != null)
                 {
@@ -194,7 +215,16 @@ namespace EkstreToparlama
                         cmbDateFilter.SelectedIndex = 0;
                     }
 
-                    lblFileInfo.Text = $"Baþarýyla Yüklendi! Toplam {islemler.Count} iþlem bulundu. Dosya: " + Path.GetFileName(openFileDialog.FileName);
+                    lblFileInfo.Text = $"Kayýt: {temizDosyaAdi}.json | Toplam {islemler.Count} iþlem yüklendi.";
+
+                    // Ýlk haliyle JSON dosyasýna otomatik kaydet
+                    AutoSave();
+                    RefreshSavedRecordsCombo();
+
+                    // Kaydedilen veriyi combobox üzerinde seçili göster
+                    _isBindingCombo = true;
+                    cmbSavedRecords.SelectedItem = temizDosyaAdi + ".json";
+                    _isBindingCombo = false;
                 }
                 catch (Exception ex)
                 {
@@ -273,6 +303,7 @@ namespace EkstreToparlama
 
                             mevcutIslem = new BankaIslem
                             {
+                                Id = Guid.NewGuid().ToString(), // Eþleþtirme için benzersiz ID
                                 Tarih = tarih,
                                 Tutar = tutarStr,
                                 Bakiye = bakiyeStr,
@@ -342,7 +373,7 @@ namespace EkstreToparlama
         {
             if (cmbDateFilter != null && cmbDateFilter.Items.Count > 0)
             {
-                cmbDateFilter.SelectedIndex = 0; // "Tüm Tarihler" seçeneðine geri döndürür
+                cmbDateFilter.SelectedIndex = 0;
             }
         }
 
@@ -391,7 +422,7 @@ namespace EkstreToparlama
                 }
                 else
                 {
-                    using (SolidBrush brush = new SolidBrush(Color.FromArgb(253, 224, 71))) // Soft Sarý
+                    using (SolidBrush brush = new SolidBrush(Color.FromArgb(253, 224, 71)))
                     {
                         e.Graphics.FillRectangle(brush, e.Bounds);
                     }
@@ -424,23 +455,20 @@ namespace EkstreToparlama
             {
                 if (islem.Aktarildi)
                 {
-                    // Daha estetik ve göz yormayan bir sarý (Tailwind Yellow-100)
                     row.DefaultCellStyle.BackColor = Color.FromArgb(254, 252, 216);
-                    row.DefaultCellStyle.SelectionBackColor = Color.FromArgb(253, 230, 138); // Yellow-200
+                    row.DefaultCellStyle.SelectionBackColor = Color.FromArgb(253, 230, 138);
                 }
                 else
                 {
-                    // Silme iþleminden sonra sarýyý kaldýrmak için
                     row.DefaultCellStyle.BackColor = Color.Empty;
                     row.DefaultCellStyle.SelectionBackColor = Color.Empty;
                 }
 
-                // Eksi bakiye/tutar renklendirmesi
                 if (e.ColumnIndex == 1 && e.Value != null)
                 {
                     if (e.Value.ToString().Contains("-"))
                     {
-                        e.CellStyle.ForeColor = Color.FromArgb(220, 38, 38); // Modern Kýrmýzý (Red-600)
+                        e.CellStyle.ForeColor = Color.FromArgb(220, 38, 38);
                         e.CellStyle.SelectionForeColor = Color.FromArgb(220, 38, 38);
                     }
                 }
@@ -451,13 +479,13 @@ namespace EkstreToparlama
         {
             if (dgvLeft.SelectedRows.Count == 0)
             {
-                MessageBox.Show("Lütfen sol panelden aktarmak istediðiniz iþlemleri seçiniz.\n(Ctrl veya Shift tuþuna basýlý tutarak çoklu seçim yapabilirsiniz.)", "Seçim Yapýlmadý", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                MessageBox.Show("Lütfen sol panelden aktarmak istediðiniz iþlemleri seçiniz.", "Seçim Yapýlmadý", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
 
             if (string.IsNullOrWhiteSpace(_secilenIslemTuru))
             {
-                MessageBox.Show("Lütfen alt panelden bir iþlem türü kartý (Giriþ veya Çýkýþ) seçiniz.", "Tür Seçilmedi", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                MessageBox.Show("Lütfen alt panelden bir iþlem türü kartý seçiniz.", "Tür Seçilmedi", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
 
@@ -465,7 +493,6 @@ namespace EkstreToparlama
             decimal toplamTutar = 0;
             string islemTarihi = "";
 
-            // Silme iþlemi (geri alma) için sol taraftan aktarýlan satýrlarý tutacaðýmýz liste
             List<DataGridViewRow> aktarilanSatirlarListesi = new List<DataGridViewRow>();
 
             var secilenSatirlar = dgvLeft.SelectedRows.Cast<DataGridViewRow>()
@@ -498,7 +525,6 @@ namespace EkstreToparlama
 
             dgvLeft.ClearSelection();
 
-            // Günün Son Bakiyesini Bulma Mantýðý
             string gunlukSonBakiye = "0,00";
             if (!string.IsNullOrEmpty(islemTarihi))
             {
@@ -517,21 +543,17 @@ namespace EkstreToparlama
             }
 
             int rightRowIdx = dgvRight.Rows.Add(islemTarihi, toplamTutar.ToString("N2", new CultureInfo("tr-TR")), secilenTur, gunlukSonBakiye);
-
-            // Sað satýra, sol panelden gelen satýrlarýn listesini "Tag" olarak ekliyoruz
             dgvRight.Rows[rightRowIdx].Tag = aktarilanSatirlarListesi;
 
             bool isIncome = secilenTur.Contains("SATIÞ") || secilenTur.Contains("GÝRÝÞ") || secilenTur.StartsWith("721") || secilenTur.StartsWith("077");
 
             if (isIncome)
             {
-                // Soft Yeþil
                 dgvRight.Rows[rightRowIdx].DefaultCellStyle.BackColor = Color.FromArgb(220, 252, 231);
                 dgvRight.Rows[rightRowIdx].DefaultCellStyle.SelectionBackColor = Color.FromArgb(187, 247, 208);
             }
             else
             {
-                // Soft Kýrmýzý
                 dgvRight.Rows[rightRowIdx].DefaultCellStyle.BackColor = Color.FromArgb(254, 226, 226);
                 dgvRight.Rows[rightRowIdx].DefaultCellStyle.SelectionBackColor = Color.FromArgb(254, 202, 202);
             }
@@ -542,53 +564,269 @@ namespace EkstreToparlama
             {
                 cmbDateFilter.Invalidate();
             }
+
+            // [OTOMATÝK KAYIT TETÝKLEME] VE [BÝLGÝLENDÝRME YAZISI]
+            AutoSave();
+            string suAnkiSaat = DateTime.Now.ToString("HH:mm:ss");
+            lblStatusLog.Text = $"Saat {suAnkiSaat} te {islemTarihi} {toplamTutar.ToString("N2", new CultureInfo("tr-TR"))} ({secilenTur}) eklendi";
         }
 
-        // Sað Paneldeki veriyi DELETE tuþu ile silip, sol paneldeki sarýyý eski haline getirme iþlemi
         private void dgvRight_KeyDown(object sender, KeyEventArgs e)
         {
             if (e.KeyCode == Keys.Delete)
             {
                 if (dgvRight.SelectedRows.Count > 0)
                 {
-                    // Sað taraftan seçilen satýrlarý listeye alýyoruz
                     var silinecekSatirlar = dgvRight.SelectedRows.Cast<DataGridViewRow>().ToList();
 
                     foreach (var rightRow in silinecekSatirlar)
                     {
-                        // Bu sað satýrý oluþturan sol satýrlarýn listesi "Tag" içindeydi
                         if (rightRow.Tag is List<DataGridViewRow> leftRows)
                         {
                             foreach (var leftRow in leftRows)
                             {
                                 if (leftRow.Tag is BankaIslem islem)
                                 {
-                                    islem.Aktarildi = false; // Aktarýldý iþaretini kaldýr
+                                    islem.Aktarildi = false;
                                 }
-                                // Rengi sýfýrla (CellFormatting olayýnýn sarýyý boyamayý býrakmasýný saðlar)
                                 leftRow.DefaultCellStyle.BackColor = Color.Empty;
                                 leftRow.DefaultCellStyle.SelectionBackColor = Color.Empty;
                             }
                         }
-
-                        // Sað panelden satýrý kaldýr
                         dgvRight.Rows.Remove(rightRow);
                     }
 
-                    // Ekraný güncelle ki sarýlar kaybolsun
                     dgvLeft.Invalidate();
                     if (cmbDateFilter != null) cmbDateFilter.Invalidate();
+
+                    // [OTOMATÝK KAYIT TETÝKLEME ENTEGRASYONU]
+                    AutoSave();
+                    string suAnkiSaat = DateTime.Now.ToString("HH:mm:ss");
+                    lblStatusLog.Text = $"Saat {suAnkiSaat} te seçilen toplam verisi silindi, sol panel geri alýndý.";
                 }
             }
+        }
+
+        // Klasördeki mevcut *.json uzantýlý kayýtlarý tarar ve üst ComboBox'a doldurur
+        private void RefreshSavedRecordsCombo()
+        {
+            if (cmbSavedRecords == null) return;
+
+            _isBindingCombo = true;
+            cmbSavedRecords.Items.Clear();
+
+            string klasorYolu = Path.Combine(Application.StartupPath, "Kayitlar");
+            if (Directory.Exists(klasorYolu))
+            {
+                string[] dosyalar = Directory.GetFiles(klasorYolu, "*.json");
+                foreach (var dosya in dosyalar)
+                {
+                    cmbSavedRecords.Items.Add(Path.GetFileName(dosya));
+                }
+            }
+            _isBindingCombo = false;
+        }
+
+        private void cmbSavedRecords_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            if (_isBindingCombo || cmbSavedRecords.SelectedItem == null) return;
+
+            string secilenDosya = cmbSavedRecords.SelectedItem.ToString();
+            string tamYol = Path.Combine(Application.StartupPath, "Kayitlar", secilenDosya);
+
+            if (!File.Exists(tamYol)) return;
+
+            _mevcutJsonYolu = tamYol;
+
+            try
+            {
+                string jsonIcerik = File.ReadAllText(tamYol);
+
+                dgvLeft.Rows.Clear();
+                dgvRight.Rows.Clear();
+                if (cmbDateFilter != null) cmbDateFilter.Items.Clear();
+                if (cmbDateFilter != null) cmbDateFilter.Items.Add("Tüm Tarihler");
+
+                HashSet<string> benzersizTarihler = new HashSet<string>();
+                Dictionary<string, DataGridViewRow> solSatirLookup = new Dictionary<string, DataGridViewRow>();
+
+                // Sol Panel Verilerini Regex ile Çek ve Oluþtur
+                var solRegex = new Regex(@"\{""Id"":""(?<id>[^""]*)"",""Tarih"":""(?<tarih>[^""]*)"",""Tutar"":""(?<tutar>[^""]*)"",""Bakiye"":""(?<bakiye>[^""]*)"",""Aciklama"":""(?<aciklama>.*?)"",""Aktarildi"":(?<aktarildi>true|false)\}");
+                var solEslenmeler = solRegex.Matches(jsonIcerik);
+
+                foreach (Match m in solEslenmeler)
+                {
+                    BankaIslem islem = new BankaIslem
+                    {
+                        Id = m.Groups["id"].Value,
+                        Tarih = m.Groups["tarih"].Value,
+                        Tutar = m.Groups["tutar"].Value,
+                        Bakiye = m.Groups["bakiye"].Value,
+                        Aciklama = m.Groups["aciklama"].Value,
+                        Aktarildi = bool.Parse(m.Groups["aktarildi"].Value)
+                    };
+
+                    int rIdx = dgvLeft.Rows.Add(islem.Tarih, islem.Tutar, islem.Bakiye, islem.Aciklama);
+                    dgvLeft.Rows[rIdx].Tag = islem;
+                    solSatirLookup[islem.Id] = dgvLeft.Rows[rIdx];
+
+                    if (!string.IsNullOrEmpty(islem.Tarih))
+                    {
+                        benzersizTarihler.Add(islem.Tarih);
+                    }
+                }
+
+                if (cmbDateFilter != null)
+                {
+                    foreach (var t in benzersizTarihler.OrderBy(x => x))
+                    {
+                        cmbDateFilter.Items.Add(t);
+                    }
+                    cmbDateFilter.SelectedIndex = 0;
+                }
+
+                // Sað Panel Özet Kayýtlarýný Çek ve Tag Nesnelerini Yeniden Baðla
+                var sagRegex = new Regex(@"\{""Tarih"":""(?<tarih>[^""]*)"",""ToplamTutar"":""(?<toplamTutar>[^""]*)"",""Tur"":""(?<tur>[^""]*)"",""SonBakiye"":""(?<sonBakiye>[^""]*)"",""IlgiliIslemIdleri"":\[(?<idler>[^\]]*)\]\}");
+                var sagEslenmeler = sagRegex.Matches(jsonIcerik);
+
+                foreach (Match m in sagEslenmeler)
+                {
+                    string tarih = m.Groups["tarih"].Value;
+                    string toplamTutar = m.Groups["toplamTutar"].Value;
+                    string tur = m.Groups["tur"].Value;
+                    string sonBakiye = m.Groups["sonBakiye"].Value;
+                    string idlerKumesi = m.Groups["idler"].Value;
+
+                    List<DataGridViewRow> iliskiliSolSatirlar = new List<DataGridViewRow>();
+                    if (!string.IsNullOrWhiteSpace(idlerKumesi))
+                    {
+                        var idDizisi = idlerKumesi.Replace("\"", "").Split(',');
+                        foreach (var id in idDizisi)
+                        {
+                            string temizId = id.Trim();
+                            if (solSatirLookup.ContainsKey(temizId))
+                            {
+                                iliskiliSolSatirlar.Add(solSatirLookup[temizId]);
+                            }
+                        }
+                    }
+
+                    int rightRowIdx = dgvRight.Rows.Add(tarih, toplamTutar, tur, sonBakiye);
+                    dgvRight.Rows[rightRowIdx].Tag = iliskiliSolSatirlar;
+
+                    bool isIncome = tur.Contains("SATIÞ") || tur.Contains("GÝRÝÞ") || tur.Contains("721") || tur.Contains("077");
+                    if (isIncome)
+                    {
+                        dgvRight.Rows[rightRowIdx].DefaultCellStyle.BackColor = Color.FromArgb(220, 252, 231);
+                        dgvRight.Rows[rightRowIdx].DefaultCellStyle.SelectionBackColor = Color.FromArgb(187, 247, 208);
+                    }
+                    else
+                    {
+                        dgvRight.Rows[rightRowIdx].DefaultCellStyle.BackColor = Color.FromArgb(254, 226, 226);
+                        dgvRight.Rows[rightRowIdx].DefaultCellStyle.SelectionBackColor = Color.FromArgb(254, 202, 202);
+                    }
+                }
+
+                lblFileInfo.Text = "Kayýt Baþarýyla Yüklendi: " + secilenDosya;
+                string suAnkiSaat = DateTime.Now.ToString("HH:mm:ss");
+                lblStatusLog.Text = $"Saat {suAnkiSaat} te {secilenDosya} çalýþmasý geri yüklendi.";
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Kayýt dosyasý okunurken hata oluþtu: " + ex.Message, "Hata", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        // Herhangi bir harici kütüphaneye baðýmlý olmadan güvenli JSON üreten AutoSave yapýsý
+        private void AutoSave()
+        {
+            if (string.IsNullOrEmpty(_mevcutJsonYolu)) return;
+
+            try
+            {
+                List<string> solJsonSatirlari = new List<string>();
+                foreach (DataGridViewRow row in dgvLeft.Rows)
+                {
+                    if (row.IsNewRow) continue;
+                    if (row.Tag is BankaIslem islem)
+                    {
+                        solJsonSatirlari.Add($"    {{\"Id\":\"{islem.Id}\",\"Tarih\":\"{EscapeJson(islem.Tarih)}\",\"Tutar\":\"{EscapeJson(islem.Tutar)}\",\"Bakiye\":\"{EscapeJson(islem.Bakiye)}\",\"Aciklama\":\"{EscapeJson(islem.Aciklama)}\",\"Aktarildi\":{(islem.Aktarildi ? "true" : "false")}}}");
+                    }
+                }
+
+                List<string> sagJsonSatirlari = new List<string>();
+                foreach (DataGridViewRow row in dgvRight.Rows)
+                {
+                    if (row.IsNewRow) continue;
+
+                    string tarih = row.Cells[0].Value?.ToString() ?? "";
+                    string toplamTutar = row.Cells[1].Value?.ToString() ?? "";
+                    string tur = row.Cells[2].Value?.ToString() ?? "";
+                    string sonBakiye = row.Cells[3].Value?.ToString() ?? "";
+
+                    List<string> idListesi = new List<string>();
+                    if (row.Tag is List<DataGridViewRow> leftRows)
+                    {
+                        foreach (var lr in leftRows)
+                        {
+                            if (lr.Tag is BankaIslem li) idListesi.Add($"\"{li.Id}\"");
+                        }
+                    }
+
+                    string idlerDizesi = string.Join(",", idListesi);
+                    sagJsonSatirlari.Add($"    {{\"Tarih\":\"{EscapeJson(tarih)}\",\"ToplamTutar\":\"{EscapeJson(toplamTutar)}\",\"Tur\":\"{EscapeJson(tur)}\",\"SonBakiye\":\"{EscapeJson(sonBakiye)}\",\"IlgiliIslemIdleri\":[{idlerDizesi}]}}");
+                }
+
+                string tamJson = "{\n  \"SolIslemler\": [\n" + string.Join(",\n", solJsonSatirlari) + "\n  ],\n  \"SagIslemler\": [\n" + string.Join(",\n", sagJsonSatirlari) + "\n  ]\n}";
+                File.WriteAllText(_mevcutJsonYolu, tamJson);
+            }
+            catch
+            {
+                // Arka plan otomatik kaydetme hatasý durumunda akýþ kesilmez
+            }
+        }
+
+        private string EscapeJson(string s)
+        {
+            if (string.IsNullOrEmpty(s)) return "";
+            return s.Replace("\\", "\\\\").Replace("\"", "\\\"").Replace("\n", "\\n").Replace("\r", "\\r");
         }
     }
 
     public class BankaIslem
     {
+        public string Id { get; set; } = Guid.NewGuid().ToString(); // Kayýtlarý eþleþtirmek için kritik alan
         public string Tarih { get; set; }
         public string Tutar { get; set; }
         public string Bakiye { get; set; }
         public string Aciklama { get; set; }
         public bool Aktarildi { get; set; } = false;
+    }
+
+    // InputBox yerine geçecek modern ve þýk diyalog sýnýfý
+    public static class PromptDialog
+    {
+        public static string Show(string text, string caption)
+        {
+            Form prompt = new Form()
+            {
+                Width = 420,
+                Height = 180,
+                FormBorderStyle = FormBorderStyle.FixedDialog,
+                Text = caption,
+                StartPosition = FormStartPosition.CenterScreen,
+                BackColor = Color.FromArgb(15, 23, 42),
+                ForeColor = Color.White
+            };
+            Label textLabel = new Label() { Left = 25, Top = 20, Text = text, Width = 360, Font = new Font("Segoe UI", 10F), ForeColor = Color.FromArgb(241, 245, 249) };
+            TextBox textBox = new TextBox() { Left = 25, Top = 55, Width = 350, Font = new Font("Segoe UI", 11F) };
+            Button confirmation = new Button() { Text = "Kaydet", Left = 275, Width = 100, Top = 95, Height = 32, DialogResult = DialogResult.OK, FlatStyle = FlatStyle.Flat, BackColor = Color.FromArgb(16, 185, 129), ForeColor = Color.White };
+            confirmation.FlatAppearance.BorderSize = 0;
+            prompt.Controls.Add(textBox);
+            prompt.Controls.Add(confirmation);
+            prompt.Controls.Add(textLabel);
+            prompt.AcceptButton = confirmation;
+            return prompt.ShowDialog() == DialogResult.OK ? textBox.Text : "";
+        }
     }
 }

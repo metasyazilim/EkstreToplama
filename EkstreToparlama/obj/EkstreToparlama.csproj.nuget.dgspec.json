@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\Bugra\\Desktop\\EkstreToparlama\\EkstreToparlama\\EkstreToparlama.csproj": {}
+    "F:\\Github\\EkstreToplama\\EkstreToparlama\\EkstreToparlama.csproj": {}
   },
   "projects": {
-    "C:\\Users\\Bugra\\Desktop\\EkstreToparlama\\EkstreToparlama\\EkstreToparlama.csproj": {
+    "F:\\Github\\EkstreToplama\\EkstreToparlama\\EkstreToparlama.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\Bugra\\Desktop\\EkstreToparlama\\EkstreToparlama\\EkstreToparlama.csproj",
+        "projectUniqueName": "F:\\Github\\EkstreToplama\\EkstreToparlama\\EkstreToparlama.csproj",
         "projectName": "EkstreToparlama",
-        "projectPath": "C:\\Users\\Bugra\\Desktop\\EkstreToparlama\\EkstreToparlama\\EkstreToparlama.csproj",
+        "projectPath": "F:\\Github\\EkstreToplama\\EkstreToparlama\\EkstreToparlama.csproj",
         "packagesPath": "C:\\Users\\Bugra\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\Bugra\\Desktop\\EkstreToparlama\\EkstreToparlama\\obj\\",
+        "outputPath": "F:\\Github\\EkstreToplama\\EkstreToparlama\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
